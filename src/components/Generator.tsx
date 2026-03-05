@@ -109,6 +109,7 @@ export default function Generator() {
   const [captions, setCaptions] = useState<CaptionsState | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [regenMenuOpen, setRegenMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const colors = THEMES[colorTheme];
@@ -180,6 +181,58 @@ export default function Generator() {
     if (capJson.status === "fulfilled" && capJson.value?.captions) {
       setCaptions(capJson.value as CaptionsState);
     }
+    setIsCaptionLoading(false);
+  }
+
+  async function handleRegenerateImage() {
+    if (!topic.trim() || !content) return;
+    setIsImageLoading(true);
+    setImage(null);
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic.trim(), templateId: content.templateId }),
+      }).then((r) => r.json());
+      if (res?.imageBase64) {
+        setImage({ imageBase64: res.imageBase64, mimeType: res.mimeType ?? "image/jpeg" });
+      }
+    } finally {
+      setIsImageLoading(false);
+    }
+  }
+
+  async function handleRegenerateContent() {
+    if (!topic.trim()) return;
+    setIsLoading(true);
+    setIsCaptionLoading(true);
+    setCaptions(null);
+    const topicStr = topic.trim();
+    const templateId = selectedTemplate;
+
+    const textPromise = fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: topicStr, templateId, format: formatId }),
+    }).then((r) => r.json());
+
+    const captionPromise = fetch("/api/generate-caption", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: topicStr, templateId }),
+    }).then((r) => r.json()).catch(() => null);
+
+    try {
+      const textJson = await textPromise;
+      if (!textJson.error) {
+        setContent({ templateId, data: textJson.content, key: Date.now() });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+
+    const capJson = await captionPromise;
+    if (capJson?.captions) setCaptions(capJson as CaptionsState);
     setIsCaptionLoading(false);
   }
 
@@ -384,24 +437,97 @@ export default function Generator() {
                 </p>
               )}
             </div>
-            <button onClick={handleGenerate} disabled={isLoading}
-              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-bold transition-all border-2 ${
-                isLoading
-                  ? "border-stone-200 text-stone-300 cursor-not-allowed"
-                  : "border-rose-200 text-rose-500 hover:bg-rose-50 active:scale-95"
-              }`}>
-              {isLoading ? (
-                <span className="w-3 h-3 border-2 border-stone-300 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                  <path d="M21 3v5h-5"/>
-                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                  <path d="M8 16H3v5"/>
+            {/* Regenerate dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setRegenMenuOpen((v) => !v)}
+                disabled={isLoading || isImageLoading}
+                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-bold transition-all border-2 ${
+                  isLoading || isImageLoading
+                    ? "border-stone-200 text-stone-300 cursor-not-allowed"
+                    : "border-rose-200 text-rose-500 hover:bg-rose-50 active:scale-95"
+                }`}>
+                {(isLoading || isImageLoading) ? (
+                  <span className="w-3 h-3 border-2 border-stone-300 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 16H3v5"/>
+                  </svg>
+                )}
+                Regenerate
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
                 </svg>
+              </button>
+
+              {regenMenuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-10" onClick={() => setRegenMenuOpen(false)} />
+                  {/* Menu */}
+                  <div className="absolute right-0 top-full mt-1.5 z-20 rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: "#fff", border: "1px solid #EDE8E5", boxShadow: "0 8px 24px rgba(0,0,0,0.12)", minWidth: 190 }}>
+                    <div className="px-3 pt-2.5 pb-1">
+                      <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Pilih yang mau di-regenerate</p>
+                    </div>
+                    {[
+                      {
+                        label: "Semua",
+                        sub: "Konten + Gambar + Caption",
+                        icon: (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                            <path d="M21 3v5h-5"/>
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                            <path d="M8 16H3v5"/>
+                          </svg>
+                        ),
+                        action: () => { setRegenMenuOpen(false); handleGenerate(); },
+                      },
+                      {
+                        label: "Gambar saja",
+                        sub: "Generate ulang foto AI",
+                        icon: (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                          </svg>
+                        ),
+                        action: () => { setRegenMenuOpen(false); handleRegenerateImage(); },
+                      },
+                      {
+                        label: "Konten saja",
+                        sub: "Teks + Caption, gambar tetap",
+                        icon: (
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                          </svg>
+                        ),
+                        action: () => { setRegenMenuOpen(false); handleRegenerateContent(); },
+                      },
+                    ].map((item) => (
+                      <button key={item.label} onClick={item.action}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-rose-50 transition-colors text-left">
+                        <span style={{ color: "#C2185B" }}>{item.icon}</span>
+                        <div>
+                          <p className="text-[12px] font-bold text-stone-800 leading-none">{item.label}</p>
+                          <p className="text-[10px] text-stone-400 mt-0.5">{item.sub}</p>
+                        </div>
+                      </button>
+                    ))}
+                    <div className="h-2" />
+                  </div>
+                </>
               )}
-              Regenerate
-            </button>
+            </div>
             <button onClick={handleDownload} disabled={isDownloading}
               className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-bold transition-all ${
                 isDownloading ? "bg-stone-200 text-stone-400 cursor-not-allowed" : "bg-stone-900 hover:bg-stone-700 text-white active:scale-95"
