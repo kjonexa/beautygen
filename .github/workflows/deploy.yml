@@ -21,6 +21,6 @@ jobs:
             git pull origin main
             npm install --production=false
             npm run build
-            pm2 restart beautygen
+            pm2 restart ecosystem.config.js --update-env
             pm2 save
             echo "Deploy complete"
