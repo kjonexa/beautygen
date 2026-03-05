@@ -372,7 +372,7 @@ export default function Generator() {
 
         {/* Action bar */}
         {content && (
-          <div className="flex items-center gap-3" style={{ width: DISPLAY_W }}>
+          <div className="flex items-center gap-2" style={{ width: DISPLAY_W }}>
             <div className="flex-1">
               <p className="text-[12px] font-semibold text-stone-500">
                 {format.name} · {format.outputW}×{format.outputH}
@@ -384,8 +384,26 @@ export default function Generator() {
                 </p>
               )}
             </div>
+            <button onClick={handleGenerate} disabled={isLoading}
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-bold transition-all border-2 ${
+                isLoading
+                  ? "border-stone-200 text-stone-300 cursor-not-allowed"
+                  : "border-rose-200 text-rose-500 hover:bg-rose-50 active:scale-95"
+              }`}>
+              {isLoading ? (
+                <span className="w-3 h-3 border-2 border-stone-300 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                  <path d="M21 3v5h-5"/>
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                  <path d="M8 16H3v5"/>
+                </svg>
+              )}
+              Regenerate
+            </button>
             <button onClick={handleDownload} disabled={isDownloading}
-              className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[12px] font-bold transition-all ${
+              className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-bold transition-all ${
                 isDownloading ? "bg-stone-200 text-stone-400 cursor-not-allowed" : "bg-stone-900 hover:bg-stone-700 text-white active:scale-95"
               }`}>
               {isDownloading ? (
