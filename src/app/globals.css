@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+[contenteditable]:focus {
+  outline: 2px solid rgba(244, 114, 182, 0.4);
+  border-radius: 4px;
+}
+
+[contenteditable]:hover {
+  background-color: rgba(244, 114, 182, 0.06);
+  border-radius: 4px;
+}
