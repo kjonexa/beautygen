@@ -21,9 +21,9 @@ import BeautyAnnotated from "./templates/BeautyAnnotated";
 const DISPLAY_W = 400;
 
 const SOCIAL_FORMATS = [
-  { id: "square",   name: "Feed Square",  desc: "1:1",  displayH: 400, outputW: 1080, outputH: 1080,  imgH: 145 },
-  { id: "portrait", name: "Feed Portrait", desc: "4:5", displayH: 500, outputW: 1080, outputH: 1350,  imgH: 175 },
-  { id: "story",    name: "Story / Reel", desc: "9:16", displayH: 711, outputW: 1080, outputH: 1920,  imgH: 255 },
+  { id: "square",   name: "Feed Square",  desc: "1:1",  displayH: 400, outputW: 1080, outputH: 1080,  imgH: 200 },
+  { id: "portrait", name: "Feed Portrait", desc: "4:5", displayH: 500, outputW: 1080, outputH: 1350,  imgH: 250 },
+  { id: "story",    name: "Story / Reel", desc: "9:16", displayH: 711, outputW: 1080, outputH: 1920,  imgH: 355 },
 ] as const;
 
 type SocialFormatId = (typeof SOCIAL_FORMATS)[number]["id"];
