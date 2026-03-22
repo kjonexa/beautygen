@@ -10,7 +10,7 @@ export type ImageResult = { imageBase64: string; mimeType: string };
 
 export async function generateGeminiImage(prompt: string): Promise<ImageResult> {
   const model = genAI.getGenerativeModel({
-    model: process.env.GEMINI_IMAGE_MODEL ?? "gemini-2.5-flash-image",
+    model: process.env.GEMINI_IMAGE_MODEL ?? "gemini-2.0-flash-exp",
   });
 
   const result = await model.generateContent({

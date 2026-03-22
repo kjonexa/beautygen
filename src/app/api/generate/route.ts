@@ -275,7 +275,7 @@ export async function POST(req: NextRequest) {
     const prompt = promptFn(topic, cnt.steps, cnt.items);
 
     const model = genAI.getGenerativeModel({
-      model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.5-flash",
+      model: process.env.GEMINI_TEXT_MODEL ?? "gemini-2.0-flash",
       generationConfig: { temperature: 1.2, topP: 0.95, topK: 64 },
     });
 
